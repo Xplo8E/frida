@@ -1,12 +1,15 @@
 [submodule "frida-gum"]
 	path = subprojects/frida-gum
 	url = https://github.com/Xplo8E/frida-gum.git
+	branch = alpha
 [submodule "frida-core"]
 	path = subprojects/frida-core
 	url = https://github.com/Xplo8E/frida-core.git
+	branch = alpha
 [submodule "frida-python"]
 	path = subprojects/frida-python
 	url = https://github.com/Xplo8E/frida-python.git
+	branch = alpha
 [submodule "frida-node"]
 	path = subprojects/frida-node
 	url = https://github.com/frida/frida-node.git
@@ -22,6 +25,7 @@
 [submodule "frida-tools"]
 	path = subprojects/frida-tools
 	url = https://github.com/Xplo8E/frida-tools.git
+	branch = alpha
 [submodule "frida-go"]
 	path = subprojects/frida-go
 	url = https://github.com/frida/frida-go
