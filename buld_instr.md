@@ -3,7 +3,8 @@
 Here's a complete script that performs all the above steps:
 
 ```bash
-#!/bin/bash
+#!/8. **Disguised names for alpha**: Using `system-service` and `system-agent.dylib` instead of original Frida names for development/testing
+# 9. **Package naming**: Alpha packages use `_alpha.deb` suffix to distinguish from stable buildsin/bash
 set -e
 
 # Activate frida-env
@@ -66,21 +67,21 @@ pip install -e subprojects/frida-tools --no-deps
   codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/subprojects/frida-core/server/frida-server
   codesign -d --entitlements - build/subprojects/frida-core/server/frida-server 2>/dev/null | head -10
 
-  # Copy with CORRECT naming (preserve frida-server name AND entitlements)
-  cp -p build/subprojects/frida-core/server/frida-server build/ios-assets/usr/bin/frida-server
+  # Copy with DISGUISED naming for alpha/development branch
+  cp -p build/subprojects/frida-core/server/frida-server build/ios-assets/usr/bin/system-service
 
   # Re-sign to ensure entitlements are preserved after copy
-  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/bin/frida-server
+  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/bin/system-service
 
   # Verify entitlements are still present
   echo "Verifying entitlements after copy and re-signing:"
-  codesign -d --entitlements - build/ios-assets/usr/bin/frida-server 2>/dev/null | head -10
+  codesign -d --entitlements - build/ios-assets/usr/bin/system-service 2>/dev/null | head -10
 
-  cp build/subprojects/frida-core/lib/agent/frida-agent.dylib build/ios-assets/usr/lib/frida/
+  cp build/subprojects/frida-core/lib/agent/frida-agent.dylib build/ios-assets/usr/lib/frida/system-agent.dylib
 
-codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/lib/frida/frida-agent.dylib
-  # Package the .deb with original identifiers (using modified packaging script)
-FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-entitlements.sh iphoneos-arm64 build/ios-assets build/frida_16.7.11_iphoneos-arm64_original.deb
+  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/lib/frida/system-agent.dylib
+  # Package the .deb with disguised identifiers for alpha/development
+  FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-entitlements.sh iphoneos-arm64 build/ios-assets build/frida_16.7.11_iphoneos-arm64_alpha.deb
 
   # Verify entitlements are preserved in the final .deb package
   ./verify-entitlements.sh
@@ -99,4 +100,4 @@ FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-en
 9. **Original names**: Using `frida-server` and `frida-agent.dylib` instead of disguised names
 
 ## Usage:
-Run the iOS build section in `buld_instr.md` and it will now preserve entitlements throughout the entire process while using original Frida names.
+Run the iOS build section in `buld_instr.md` and it will now preserve entitlements throughout the entire process while using disguised names for the alpha branch.
