@@ -4,7 +4,7 @@ Here's a complete script that performs all the above steps:
 
 ```bash
 #!/bin/bash
-# set -e
+set -e
 
 # Activate frida-env
 # source /Users/vinay/frida-project/frida/frida-env/bin/activate
@@ -19,8 +19,7 @@ Here's a complete script that performs all the above steps:
 # cd ../../../../
 
 # Build core components without code signing
-$ pwd
-~/frida
+echo "Current directory: $(pwd)"
 
 ## mac builds, for building, frida, frida-tools, agent
 
@@ -49,7 +48,7 @@ pip install -e subprojects/frida-tools --no-deps
 
 . ./frida-env/bin/activate && python -c "import frida; print('Frida version:', frida.__version__)"
 
-cp /Users/vinay/frida-project/frida/build/subprojects/frida-core/lib/gadget/SystemFramework.dylib ~/.cache/frida
+# cp /Users/vinay/frida-project/frida/build/subprojects/frida-core/lib/gadget/SystemFramework.dylib ~/.cache/frida
 
 ## to build frida-server deb for ios with preserved entitlements
 
@@ -60,27 +59,28 @@ cp /Users/vinay/frida-project/frida/build/subprojects/frida-core/lib/gadget/Syst
   make
 
   # Code sign the binary
-  codesign -v build/subprojects/frida-core/server/system-service
-  codesign -d --entitlements - build/subprojects/frida-core/server/system-service 2>/dev/null | head -10
 
   # Prepare iOS assets directory
   mkdir -p build/ios-assets/usr/bin build/ios-assets/usr/lib/frida
 
-  # Copy with CORRECT naming (preserve system-service name AND entitlements)
-  cp -p build/subprojects/frida-core/server/system-service build/ios-assets/usr/bin/system-service
+  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/subprojects/frida-core/server/frida-server
+  codesign -d --entitlements - build/subprojects/frida-core/server/frida-server 2>/dev/null | head -10
+
+  # Copy with CORRECT naming (preserve frida-server name AND entitlements)
+  cp -p build/subprojects/frida-core/server/frida-server build/ios-assets/usr/bin/frida-server
 
   # Re-sign to ensure entitlements are preserved after copy
-  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/bin/system-service
+  codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/bin/frida-server
 
   # Verify entitlements are still present
   echo "Verifying entitlements after copy and re-signing:"
-  codesign -d --entitlements - build/ios-assets/usr/bin/system-service 2>/dev/null | head -10
+  codesign -d --entitlements - build/ios-assets/usr/bin/frida-server 2>/dev/null | head -10
 
-  cp build/subprojects/frida-core/lib/agent/system-agent.dylib build/ios-assets/usr/lib/frida/
+  cp build/subprojects/frida-core/lib/agent/frida-agent.dylib build/ios-assets/usr/lib/frida/
 
-codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/lib/frida/system-agent.dylib
-  # Package the .deb with disguised identifiers (using modified packaging script)
-FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-entitlements.sh iphoneos-arm64 build/ios-assets build/frida_16.7.11_iphoneos-arm64_fix.deb
+codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements build/ios-assets/usr/lib/frida/frida-agent.dylib
+  # Package the .deb with original identifiers (using modified packaging script)
+FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-entitlements.sh iphoneos-arm64 build/ios-assets build/frida_16.7.11_iphoneos-arm64_original.deb
 
   # Verify entitlements are preserved in the final .deb package
   ./verify-entitlements.sh
@@ -88,11 +88,15 @@ FRIDA_VERSION=16.7.11 subprojects/frida-core/tools/package-server-fruity-with-en
 
 ## Key Changes Made:
 
-1. **Use `cp -p` instead of `cp`**: Preserves file metadata including extended attributes
-2. **Re-sign after copy**: Uses `codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements`
-3. **Modified packaging script**: `package-server-fruity-with-entitlements.sh` that preserves entitlements
-4. **Verification steps**: Added multiple verification points to check entitlements at each stage
-5. **Final verification script**: `verify-entitlements.sh` to validate the complete process
+1. **Fixed incorrect commands**: Replaced `$ pwd` and `~/frida` with proper `echo "Current directory: $(pwd)"`
+2. **Consistent codesign usage**: All codesign commands now properly sign with certificate identity
+3. **Use `cp -p` instead of `cp`**: Preserves file metadata including extended attributes
+4. **Re-sign after copy**: Uses `codesign -f -s "$IOS_CERTID" --preserve-metadata=entitlements`
+5. **Modified packaging script**: `package-server-fruity-with-entitlements.sh` that preserves entitlements
+6. **Verification steps**: Added multiple verification points to check entitlements at each stage
+7. **Final verification script**: `verify-entitlements.sh` to validate the complete process
+8. **Error handling**: Enabled `set -e` to exit on errors
+9. **Original names**: Using `frida-server` and `frida-agent.dylib` instead of disguised names
 
 ## Usage:
-Run the iOS build section in `buld_instr.md` and it will now preserve entitlements throughout the entire process.
+Run the iOS build section in `buld_instr.md` and it will now preserve entitlements throughout the entire process while using original Frida names.

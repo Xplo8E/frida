@@ -3,25 +3,25 @@
 # Script to verify entitlements are preserved throughout the build process
 set -e
 
-echo "=== Frida System-Service Entitlements Verification ==="
+echo "=== Frida Server Entitlements Verification ==="
 echo
 
-# Check if system-service binary exists
-SYSTEM_SERVICE_PATH="build/subprojects/frida-core/server/system-service"
-ASSETS_PATH="build/ios-assets/usr/bin/system-service"
+# Check if frida-server binary exists
+FRIDA_SERVER_PATH="build/subprojects/frida-core/server/frida-server"
+ASSETS_PATH="build/ios-assets/usr/bin/frida-server"
 
-if [ ! -f "$SYSTEM_SERVICE_PATH" ]; then
-    echo "❌ Original system-service binary not found at: $SYSTEM_SERVICE_PATH"
+if [ ! -f "$FRIDA_SERVER_PATH" ]; then
+    echo "❌ Original frida-server binary not found at: $FRIDA_SERVER_PATH"
     echo "Please run the build process first."
     exit 1
 fi
 
-echo "✅ Found original system-service binary"
+echo "✅ Found original frida-server binary"
 echo
 
 # Check entitlements on original binary
-echo "📋 Entitlements on original binary ($SYSTEM_SERVICE_PATH):"
-if codesign -d --entitlements - "$SYSTEM_SERVICE_PATH"; then
+echo "📋 Entitlements on original binary ($FRIDA_SERVER_PATH):"
+if codesign -d --entitlements - "$FRIDA_SERVER_PATH"; then
     echo "✅ Original binary has entitlements"
 else
     echo "❌ Original binary has no entitlements or is not signed"
@@ -45,7 +45,7 @@ else
 fi
 
 # Check if .deb package exists and extract it for verification
-DEB_PATH="build/frida_16.7.11_iphoneos-arm64_fix.deb"
+DEB_PATH="build/frida_16.7.11_iphoneos-arm64_original.deb"
 if [ -f "$DEB_PATH" ]; then
     echo "✅ Found .deb package: $DEB_PATH"
 
@@ -57,10 +57,10 @@ if [ -f "$DEB_PATH" ]; then
 
     # Check entitlements on extracted binary
     EXTRACTED_BINARY=""
-    if [ -f "$TEMP_DIR/var/jb/usr/sbin/system-service" ]; then
-        EXTRACTED_BINARY="$TEMP_DIR/var/jb/usr/sbin/system-service"
-    elif [ -f "$TEMP_DIR/usr/sbin/system-service" ]; then
-        EXTRACTED_BINARY="$TEMP_DIR/usr/sbin/system-service"
+    if [ -f "$TEMP_DIR/var/jb/usr/sbin/frida-server" ]; then
+        EXTRACTED_BINARY="$TEMP_DIR/var/jb/usr/sbin/frida-server"
+    elif [ -f "$TEMP_DIR/usr/sbin/frida-server" ]; then
+        EXTRACTED_BINARY="$TEMP_DIR/usr/sbin/frida-server"
     fi
 
     if [ -n "$EXTRACTED_BINARY" ]; then
@@ -74,7 +74,7 @@ if [ -f "$DEB_PATH" ]; then
             echo "💥 FAILURE: Entitlements were lost during packaging!"
         fi
     else
-        echo "❌ Could not find system-service binary in extracted package"
+        echo "❌ Could not find frida-server binary in extracted package"
     fi
 
     # Cleanup
