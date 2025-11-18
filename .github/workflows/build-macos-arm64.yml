@@ -1,0 +1,65 @@
+name: Build macOS ARM64
+
+on:
+  push:
+    branches:
+      - stable-16.7.11
+  workflow_dispatch:
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Configure
+        run: |
+          export MACOS_CERTID=""
+          ./configure \
+            --prefix=$PWD/build/frida-macos-arm64 \
+            --host=macos-arm64 \
+            --enable-gadget \
+            --enable-server \
+            --enable-frida-python
+
+      - name: Build
+        run: make
+
+      - name: Install
+        run: make install
+
+      - name: Package Python bindings
+        run: |
+          export FRIDA_PREFIX=$PWD/build/frida-macos-arm64
+          export FRIDA_EXTENSION=$(find "$FRIDA_PREFIX" -name _frida.abi3.so)
+          export _PYTHON_HOST_PLATFORM=macosx-11.0-arm64
+          cd subprojects/frida-python
+          pip wheel -w "$FRIDA_PREFIX/wheels" --no-deps .
+
+      - name: Upload frida-server and frida-gadget
+        uses: actions/upload-artifact@v4
+        with:
+          name: frida-binaries-macos-arm64
+          path: |
+            build/frida-macos-*/bin/frida-server
+            build/frida-macos-*/lib/frida/*/frida-gadget.dylib
+
+      - name: Upload Python wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: frida-python-wheel-macos-arm64
+          path: build/frida-macos-arm64/wheels/*.whl
