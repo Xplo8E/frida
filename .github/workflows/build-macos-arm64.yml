@@ -29,9 +29,28 @@ jobs:
       - name: Install setuptools
         run: pip install setuptools
 
+      - name: Install Apple certificates
+        if: ${{ secrets.CERTIFICATES_P12 != '' }}
+        env:
+          CERTIFICATES_P12: ${{ secrets.CERTIFICATES_P12 }}
+          CERTIFICATES_PASSWORD: ${{ secrets.CERTIFICATES_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/apple-certificates.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/frida-signing.keychain-db
+          echo -n "$CERTIFICATES_P12" | base64 --decode --output $CERTIFICATE_PATH
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $CERTIFICATE_PATH -P "$CERTIFICATES_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          rm $CERTIFICATE_PATH
+          MACOS_CERTID=$(security find-identity -v -p codesigning | grep -E "Developer ID Application:|frida-cert" | head -1 | awk '{ print $2 }')
+          echo "MACOS_CERTID=$MACOS_CERTID" >> $GITHUB_ENV
+
       - name: Configure
         run: |
-          export MACOS_CERTID=""
+          export MACOS_CERTID="${MACOS_CERTID:-}"
           export FRIDA_PREFIX=$PWD/build/frida-macos-arm64
           ./configure \
             --prefix=$FRIDA_PREFIX \
