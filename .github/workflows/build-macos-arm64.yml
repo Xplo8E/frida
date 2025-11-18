@@ -24,13 +24,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+
+      - name: Install setuptools
+        run: pip install setuptools
 
       - name: Configure
         run: |
           export MACOS_CERTID=""
+          export FRIDA_PREFIX=$PWD/build/frida-macos-arm64
           ./configure \
-            --prefix=$PWD/build/frida-macos-arm64 \
+            --prefix=$FRIDA_PREFIX \
             --host=macos-arm64 \
             --enable-gadget \
             --enable-server \
