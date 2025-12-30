@@ -1,0 +1,181 @@
+# Frida Copilot Instructions
+
+## Project Overview
+
+Frida is a dynamic instrumentation toolkit composed of multiple subprojects spanning C, C++, Vala, JavaScript, TypeScript, Python, and assembly. The main repository acts as a meta-build system that orchestrates building all components using Meson build system wrapped by Make.
+
+## Architecture
+
+### Core Components
+- **frida-gum**: Low-level instrumentation engine (C/C++) - core of Frida's hooking capabilities
+- **frida-core**: High-level APIs and process injection (Vala/C) - provides the main Frida interface
+- **frida-tools**: CLI tools (`frida`, `frida-trace`, etc.) (Python/JavaScript) - user-facing command-line utilities
+
+### Language Bindings
+- **frida-python**: Python bindings (auto-enabled for native builds)
+- **frida-node**: Node.js bindings (disabled by default)
+- **frida-clr**: .NET bindings (Windows only, disabled by default)
+- **frida-swift**: Swift bindings (macOS only, disabled by default)
+- **frida-qml**: Qt/QML bindings (disabled by default)
+
+### Build Products
+- **frida-server**: Remote debugging server for embedded/mobile targets
+- **frida-gadget**: Injectable library for self-instrumentation
+- **frida-inject**: Process injection tool
+
+## Build System & Development Workflow
+
+### Essential Commands
+export the name of the created certificate to relevant environment
+variables, and run `make`:
+
+```bash
+    export MACOS_CERTID=frida-cert
+    export IOS_CERTID=frida-cert
+    export WATCHOS_CERTID=frida-cert
+    export TVOS_CERTID=frida-cert
+```
+
+```bash
+# Basic build (after activating Python environment)
+make                    # Build all components
+make clean              # Clean build artifacts
+make distclean          # Clean everything including dependencies
+make install            # Install built components
+make test               # Run test suite
+
+# Configure build options
+./configure --prefix=/usr/local --enable-shared
+```
+
+### Submodule Management
+Frida uses git submodules extensively. Always run this first:
+```bash
+python tools/ensure-submodules.py           # Fetch core submodules
+python tools/ensure-submodules.py <name>    # Fetch specific submodule
+```
+
+### Cross-Platform Building
+For Apple platforms, code signing certificates are required:
+```bash
+export MACOS_CERTID=frida-cert
+export IOS_CERTID=frida-cert
+export WATCHOS_CERTID=frida-cert
+export TVOS_CERTID=frida-cert
+make
+```
+
+### Testing
+```bash
+make test                           # Run all tests
+FRIDA_TEST_OPTIONS="-k pattern" make test  # Run specific tests
+```
+
+### Python Environment
+Always use the project's Python virtual environment:
+```bash
+source frida-env/bin/activate
+```
+
+## Build Configuration (meson.options)
+
+Key options that affect what gets built:
+- `frida_tools`: CLI tools (auto)
+- `gadget`: frida-gadget (auto for cross-builds)
+- `server`: frida-server (auto for cross-builds)
+- `inject`: frida-inject (auto for cross-builds)
+- `frida_python`: Python bindings (auto)
+- `frida_node`: Node.js bindings (disabled)
+- `frida_clr`: .NET bindings (disabled)
+- `frida_swift`: Swift bindings (disabled)
+- `frida_qml`: QML bindings (disabled)
+
+## Coding Standards & Patterns
+
+### General Rules
+- Use meaningful variable/function names instead of comments
+- Higher-level functions before lower-level functions in files
+- Minimize nesting when possible
+- No trailing spaces
+- Extract repeated code into functions
+
+### Language-Specific Conventions
+
+#### C/C++ (frida-gum: 80 chars, frida-core: 140 chars max line length)
+- Space before parentheses in function calls: `func (args)`
+- Space around pointer asterisks: `Type * var`
+- Curly braces on new lines
+- 2-space indentation
+- Function names prefixed with `frida_` in frida-core
+
+#### JavaScript
+- Single quotes for strings
+- 2-space indentation
+- Curly braces on same line
+- Semicolons mandatory
+- Strict equality operators (`===`)
+
+#### TypeScript
+- Double quotes for strings
+- 4-space indentation
+- Pascal case for enum values
+- Prefer `interface` over `type`
+
+#### Vala
+- Tab indentation
+- `var` type when obvious
+- Same spacing rules as C
+- Curly braces on same line
+
+#### Python
+- Follow PEP-8
+- Double quotes for regular strings, single for enum-like values
+- Alphabetical import ordering
+
+## File Organization & Dependencies
+
+### Key Directories
+- `subprojects/`: Git submodules for each component
+- `build/`: Build outputs and Meson configuration
+- `deps/`: External dependencies
+- `releng/`: Release engineering and build infrastructure
+- `frida-env/`: Python virtual environment
+
+### Integration Points
+- Components communicate through Meson subproject dependencies
+- frida-core depends on frida-gum
+- Language bindings depend on frida-core
+- CLI tools depend on Python bindings
+
+### External Dependencies
+- Managed through Meson wraps in `subprojects/*.wrap`
+- Key dependencies: capstone, json-glib, libsoup, quickjs, tinycc
+
+## Common Development Tasks
+
+### Adding a New Feature
+1. Identify which subproject(s) need changes
+2. Update meson.build files for new dependencies
+3. Follow language-specific coding standards
+4. Add tests in appropriate test directories
+5. Update documentation if public APIs change
+
+### Debugging Build Issues
+1. Check `build/meson-logs/meson-log.txt` for detailed error messages
+2. Verify submodules are initialized: `python tools/ensure-submodules.py`
+3. Ensure Python environment is activated
+4. For cross-compilation, verify toolchain and certificates
+
+### Working with Subprojects
+- Each subproject is independent but coordinated through the root meson.build
+- Changes to APIs require coordinated updates across dependent subprojects
+- Use `meson subprojects download` to fetch wraps
+- Subproject versions are pinned in `.wrap` files
+
+## Security Considerations
+
+- Never expose or log secrets/keys in instrumentation code
+- Never commit secrets to repository
+- Follow security best practices for dynamic instrumentation
+- Be careful with memory operations in C/C++ components</content>
+<parameter name="filePath">/Users/vinay/frida-project/frida/.github/copilot-instructions.md

@@ -4,3 +4,13 @@
 /releng/modules/frida-gadget-ios/*.dylib
 /releng/modules/frida-gadget-ios/node_modules
 /subprojects/*
+
+# Large build artifacts
+frida-custom-*.tar.gz
+
+# Certificate files (sensitive)
+frida-cert*.p12
+frida-cert-base64.txt
+
+# PAI/Claude config (EXTREMELY SENSITIVE)
+.claude/
